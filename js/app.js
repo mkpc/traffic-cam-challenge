@@ -21,6 +21,9 @@ $(document).ready(function(){
     var list;
     var markers = [];
     var infoWindow =null;
+    var text
+
+
 
 
     var mapElem = document.getElementById('map');
@@ -33,27 +36,37 @@ $(document).ready(function(){
             zoom: 12
         });
 
-        var infoWindow = new  google.maps.InfoWindow();
+    var markerBounds = new google.maps.LatLngBounds();
+
+    var infoWindow = new  google.maps.InfoWindow();
 
         $.getJSON("http://data.seattle.gov/resource/65fc-btcc.json")
             .done(function(data){
                 list =data;
+
+
                 data.forEach(function(list,itemIdex){
+                    var point = new google.maps.LatLng(Number(list.location.latitude),Number(list.location.longitude));
                     var marker = new google.maps.Marker({
-                        position:{
-                            lat: Number(list.location.latitude),
-                            lng: Number(list.location.longitude)
-                },
-                map: map
+                        position:point,
+                map: map,
+                title: list.cameralabel,
+                animation: google.maps.Animation.DROP
             });
+
+            markerBounds.extend(point)
+
             markers.push(marker);
 
             google.maps.event.addListener(marker, 'click', function() {
                 var html  = '<h2>' + list.cameralabel + '</h2>';
-                    html += '<img src="' + list.imageurl.url + '">'
+                    html += '<img src="' + list.imageurl.url + '">';
+
 
                 infoWindow.setContent(html);
                 infoWindow.open(map, this);
+
+                map.panTo(marker.getPosition())
                 });
             })
 })
@@ -64,6 +77,37 @@ $(document).ready(function(){
             .always(function(){
                 $('#ajax-loafer').fadeOut()
             });
+
+    $("#search").bind('search keyup',function(){
+        //var searchString = $('#search').val().toLowerCase();
+        var input = document.getElementById('search').value;
+        input = input.toLowerCase();
+        var idx;
+        for (idx = 0; idx < markers.length; idx++) {
+            var tempMarker = markers[idx];
+            var trafficCamName = tempMarker.name.toLowerCase();
+            if (!trafficCamName.contains(searchString)) {
+                tempMarker.setMap(null);
+            } else { //if the input text from the search box does match the name of a camera
+                tempMarker.setMap(map);
+            }
+        }
+
+
+
+        //var inputName =$(this).inputName().toLowerCase();
+        //
+        //$(markers).setMap(null);
+        //
+        //$(markers).each(function(){
+        //    var text = $(this).text().toLowerCase();
+        //    if(text.indexOf(inputName) != -1){
+        //        $(this).setMap();
+        //    }
+        //})
+
+
+    })
 
 })
 
